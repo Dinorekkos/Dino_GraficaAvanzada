@@ -7,7 +7,8 @@
 #include"EBO.h"
 #include<stb/stb_image.h>
 
-
+//DinoChange
+//para mandar el fork a mi repo
 int main()
 {
     glfwInit();
