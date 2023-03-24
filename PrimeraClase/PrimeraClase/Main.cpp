@@ -76,7 +76,7 @@ int main()
 
     //se crean shaders
 
-    Shader shaderProgram("default.vert", "default.frag");
+    Shader shaderProgram("waterWave.vert", "waterWave.frag");
 
     VAO VAO1;
     VAO1.Bind();
@@ -93,6 +93,8 @@ int main()
     VBO1.Unbind();
     EBO1.Unbind();
 
+    GLfloat seconds = 1.0f;
+    
     GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
     GLuint tex0uni = glGetUniformLocation(shaderProgram.ID, "tex0");
 
@@ -100,7 +102,12 @@ int main()
     glUniform1i(tex0uni, 0);
 
     while (!glfwWindowShouldClose(window))
-    {   
+    {
+
+        GLfloat time = glfwGetTime() * seconds;
+
+
+        
         glBindTexture(GL_TEXTURE_2D, texture);
         
 

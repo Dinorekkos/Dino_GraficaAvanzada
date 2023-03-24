@@ -9,6 +9,6 @@ void main() {
 
     vec2 uv = textureCoordinate.xy;
     uv.y += sin(uv.x * 10.0 + timeWave) * 0.05;
-    vec4 color = texture(inputImageTexture, uv);
+    vec4 FragColor = texture(inputImageTexture, uv);
     
 }
