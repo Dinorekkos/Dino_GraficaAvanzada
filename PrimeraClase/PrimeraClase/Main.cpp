@@ -7,8 +7,6 @@
 #include"EBO.h"
 #include<stb/stb_image.h>
 
-//DinoChange
-//para mandar el fork a mi repo
 int main()
 {
     glfwInit();
@@ -112,7 +110,7 @@ int main()
         shaderProgram.Activate();
 
         GLfloat time = glfwGetTime() * seconds;
-
+        
         GLuint sampler2D = glGetUniformLocation(shaderProgram.ID, "inputImageTexture");
         GLfloat wave = glGetUniformLocation(shaderProgram.ID, "timeWave");
         GLfloat speed = glGetUniformLocation(shaderProgram.ID, "speed");
@@ -120,9 +118,9 @@ int main()
         GLfloat frequency = glGetUniformLocation(shaderProgram.ID, "frequency");
 
         glUniform1f(wave, time);
-        glUniform1f(speed, 5.0f);
+        glUniform1f(speed, 1.0f);
         glUniform1f(amplitude, 0.05f);
-        glUniform1f(frequency, 30.0f);
+        glUniform1f(frequency, 10.0f);
         glUniform1i(sampler2D, 0);
      
          // glUniform1i(uniID, 0.5f);
