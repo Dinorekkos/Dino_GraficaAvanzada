@@ -7,8 +7,6 @@
 #include"EBO.h"
 #include<stb/stb_image.h>
 
-//DinoChange
-//para mandar el fork a mi repo
 int main()
 {
     glfwInit();
@@ -39,7 +37,6 @@ int main()
     gladLoadGL();
 
     //Se crea Textura
-
     GLuint texture;
     glGenTextures(1, &texture);
 
@@ -66,7 +63,7 @@ int main()
     std::cout << numCol << std::endl;
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthTx, heightTx, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
-    
+
     //Se genera Textura
 
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -93,34 +90,48 @@ int main()
     VBO1.Unbind();
     EBO1.Unbind();
 
+     // GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
+     // GLuint tex0uni = glGetUniformLocation(shaderProgram.ID, "tex0");
+
+    //time
     GLfloat seconds = 1.0f;
-    
-    GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-    GLuint tex0uni = glGetUniformLocation(shaderProgram.ID, "tex0");
-
-    shaderProgram.Activate();
-    glUniform1i(tex0uni, 0);
-
+ 
     while (!glfwWindowShouldClose(window))
     {
 
-        GLfloat time = glfwGetTime() * seconds;
-
-
-        
-        glBindTexture(GL_TEXTURE_2D, texture);
-        
-
+       
         glClearColor(0.0f, 0.0f, 0.0f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+     
+
         shaderProgram.Activate();
-        glUniform1f(uniID, 0.5f);
+
+        GLfloat time = glfwGetTime() * seconds;
+        
+        GLuint sampler2D = glGetUniformLocation(shaderProgram.ID, "inputImageTexture");
+        GLfloat wave = glGetUniformLocation(shaderProgram.ID, "timeWave");
+        GLfloat speed = glGetUniformLocation(shaderProgram.ID, "speed");
+        GLfloat amplitude = glGetUniformLocation(shaderProgram.ID, "amplitude");
+        GLfloat frequency = glGetUniformLocation(shaderProgram.ID, "frequency");
+
+        glUniform1f(wave, time);
+        glUniform1f(speed, 1.0f);
+        glUniform1f(amplitude, 0.05f);
+        glUniform1f(frequency, 10.0f);
+        glUniform1i(sampler2D, 0);
+     
+         // glUniform1i(uniID, 0.5f);
+         // glUniform1i(tex0uni, 0);
+     
+        std::cout << time << std::endl;
+
         VAO1.Bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
-
         glfwPollEvents();
     }
 
