@@ -36,6 +36,10 @@ int main()
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
+    //Se crea FrameBuffer
+    GLuint framebufferID;
+    glGenFramebuffers(1, &framebufferID);
+ 
     //Se crea Textura
     GLuint texture;
     glGenTextures(1, &texture);
@@ -65,17 +69,25 @@ int main()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthTx, heightTx, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
 
     //Se genera Textura
-
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(bytes);
     glBindTexture(GL_TEXTURE_2D, 0);
+ 
+    //Validacion de FrameBuffer
 
-
+     glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
+     //Attached texture to framebuffer
+     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+ 
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+     std::cout << "Error al crear el framebuffer" << std::endl;
+    }
+    
     //se crean shaders
-
-    Shader shaderProgram("waterWave.vert", "waterWave.frag");
+    Shader shaderProgram("Blur.vert", "Blur.frag");
 
     VAO VAO1;
+ 
     VAO1.Bind();
 
     VBO VBO1(squareVertices, sizeof(squareVertices));
@@ -89,47 +101,38 @@ int main()
     VAO1.Unbind();
     VBO1.Unbind();
     EBO1.Unbind();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
      // GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
      // GLuint tex0uni = glGetUniformLocation(shaderProgram.ID, "tex0");
-
-    //time
-    GLfloat seconds = 1.0f;
  
     while (!glfwWindowShouldClose(window))
     {
-
-       
         glClearColor(0.0f, 0.0f, 0.0f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
-     
 
+        glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
         shaderProgram.Activate();
-
-        GLfloat time = glfwGetTime() * seconds;
         
-        GLuint sampler2D = glGetUniformLocation(shaderProgram.ID, "inputImageTexture");
-        GLfloat wave = glGetUniformLocation(shaderProgram.ID, "timeWave");
-        GLfloat speed = glGetUniformLocation(shaderProgram.ID, "speed");
-        GLfloat amplitude = glGetUniformLocation(shaderProgram.ID, "amplitude");
-        GLfloat frequency = glGetUniformLocation(shaderProgram.ID, "frequency");
 
-        glUniform1f(wave, time);
-        glUniform1f(speed, 1.0f);
-        glUniform1f(amplitude, 0.05f);
-        glUniform1f(frequency, 10.0f);
-        glUniform1i(sampler2D, 0);
-     
+        GLfloat blurAmount = glGetUniformLocation(shaderProgram.ID, "blurAmount");
+        GLfloat blurDirectionY = glGetUniformLocation(shaderProgram.ID, "blurDirY");
+        GLfloat blurDirectionX = glGetUniformLocation(shaderProgram.ID, "blurDirX");
+
+        glUniform1f(blurAmount, 0.5f);
+        glUniform1f(blurDirectionY, 2.0f);
+        glUniform1f(blurDirectionX, 1.0f);
          // glUniform1i(uniID, 0.5f);
          // glUniform1i(tex0uni, 0);
      
-        std::cout << time << std::endl;
-
         VAO1.Bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
