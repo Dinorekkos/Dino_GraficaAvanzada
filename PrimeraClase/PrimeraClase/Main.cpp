@@ -7,6 +7,7 @@
 #include"EBO.h"
 #include<stb/stb_image.h>
 
+
 int main()
 {
     glfwInit();
@@ -21,10 +22,18 @@ int main()
 
     GLfloat squareVertices[] =
     { //     COORDINATES     /        COLORS      /   TexCoord  //
-    -0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,    0.0f, 0.0f, // Lower left corner
-    -0.5f,  0.5f, 0.0f,     0.0f, 1.0f, 0.0f,    0.0f, 1.0f, // Upper left corner
-     0.5f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f,    1.0f, 1.0f, // Upper right corner
-     0.5f, -0.5f, 0.0f,     1.0f, 1.0f, 1.0f,    1.0f, 0.0f  // Lower right corner
+    -0.4f, -0.60f, 0.0f,     1.0f, 0.0f, 0.0f,    0.0f, 0.0f, // Lower left corner
+    -0.4f,  0.00f, 0.0f,     0.0f, 1.0f, 0.0f,    0.0f, 1.0f, // Upper left corner
+     0.4f,  0.00f, 0.0f,     0.0f, 0.0f, 1.0f,    1.0f, 1.0f, // Upper right corner
+     0.4f, -0.60f, 0.0f,     1.0f, 1.0f, 1.0f,    1.0f, 0.0f  // Lower right corner
+    };
+
+    GLfloat squareVerticesTwo[] =
+    { //     COORDINATES     /        COLORS      /   TexCoord  //
+    -0.4f, 0.00f, 0.0f,     1.0f, 0.0f, 0.0f,    0.0f, 0.0f, // Lower left corner
+    -0.4f, 0.60f, 0.0f,     0.0f, 1.0f, 0.0f,    0.0f, 1.0f, // Upper left corner
+     0.4f, 0.60f, 0.0f,     0.0f, 0.0f, 1.0f,    1.0f, 1.0f, // Upper right corner
+     0.4f, 0.00f, 0.0f,     1.0f, 1.0f, 1.0f,    1.0f, 0.0f  // Lower right corner
     };
 
     GLuint squareIndices[] =
@@ -36,11 +45,14 @@ int main()
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    //Se crea FrameBuffer
-    GLuint framebufferID;
-    glGenFramebuffers(1, &framebufferID);
- 
     //Se crea Textura
+
+    GLuint FBO;
+    glGenFramebuffers(1, &FBO);
+
+    // Enlazar el FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
     GLuint texture;
     glGenTextures(1, &texture);
 
@@ -66,28 +78,31 @@ int main()
     std::cout << heightTx << std::endl;
     std::cout << numCol << std::endl;
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthTx, heightTx, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
-
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, widthTx, heightTx, 0, GL_RGB, GL_UNSIGNED_BYTE, bytes);
+    
     //Se genera Textura
+
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(bytes);
     glBindTexture(GL_TEXTURE_2D, 0);
- 
-    //Validacion de FrameBuffer
 
-     glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
-     //Attached texture to framebuffer
-     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
- 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-     std::cout << "Error al crear el framebuffer" << std::endl;
-    }
-    
     //se crean shaders
+
+    // Crear y unir una textura al FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+    // Verificar si el FBO está completo y funcionando correctamente
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Error al crear el FBO" << std::endl;
+    }
+
+    // Desenlazar el FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     Shader shaderProgram("Blur.vert", "Blur.frag");
 
     VAO VAO1;
- 
     VAO1.Bind();
 
     VBO VBO1(squareVertices, sizeof(squareVertices));
@@ -101,53 +116,53 @@ int main()
     VAO1.Unbind();
     VBO1.Unbind();
     EBO1.Unbind();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    GLuint scale = glGetUniformLocation(shaderProgram.ID, "scale");
+    GLuint tex0 = glGetUniformLocation(shaderProgram.ID, "tex0");
 
-     // GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-     // GLuint tex0uni = glGetUniformLocation(shaderProgram.ID, "tex0");
- 
-    while (!glfwWindowShouldClose(window))
-    {
-        glClearColor(0.0f, 0.0f, 0.0f, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+    GLfloat blurAmount = glGetUniformLocation(shaderProgram.ID, "blurAmount");
+    GLfloat blurDirY = glGetUniformLocation(shaderProgram.ID, "blurDirY");
+    GLfloat blurDirX = glGetUniformLocation(shaderProgram.ID, "blurDirX");
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+     shaderProgram.Activate();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, framebufferID);
-        shaderProgram.Activate();
-        
+     glUniform1i(tex0, 0);
 
-        GLfloat blurAmount = glGetUniformLocation(shaderProgram.ID, "blurAmount");
-        GLfloat blurDirectionY = glGetUniformLocation(shaderProgram.ID, "blurDirY");
-        GLfloat blurDirectionX = glGetUniformLocation(shaderProgram.ID, "blurDirX");
+     while (!glfwWindowShouldClose(window))
+     {
+         glClearColor(0.0f, 0.0f, 0.0f, 1);
+         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUniform1f(blurAmount, 0.5f);
-        glUniform1f(blurDirectionY, 2.0f);
-        glUniform1f(blurDirectionX, 1.0f);
-         // glUniform1i(uniID, 0.5f);
-         // glUniform1i(tex0uni, 0);
+         glBindTexture(GL_TEXTURE_2D, texture);
+
+         glUniform1f(scale, 0.5f);
+         glUniform1f(blurAmount, 1.0f);
+         glUniform1f(blurDirY, 1.0f);
+         glUniform1f(blurDirX, 1.0f);
+      
+         VAO1.Bind();
+
+         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+      
+               
+         // Intercambiar buffers y manejar eventos
+         glfwSwapBuffers(window);
+         glfwPollEvents();
+     }
+
      
-        VAO1.Bind();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
+      VAO1.Delete();
+      VBO1.Delete();
+      EBO1.Delete();
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+      shaderProgram.Delete();
 
-    VAO1.Delete();
-    VBO1.Delete();
-    EBO1.Delete();
+      glViewport(0, 0, 950, 950);
+      glfwSwapBuffers(window);
 
-    shaderProgram.Delete();
-
-    glViewport(0, 0, 950, 950);
-    glfwSwapBuffers(window);
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
+      glfwDestroyWindow(window);
+      glfwTerminate();
+      return 0;
 }
