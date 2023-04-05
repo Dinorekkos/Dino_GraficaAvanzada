@@ -72,7 +72,7 @@ int main()
     int widthTx, heightTx, numCol;
     stbi_set_flip_vertically_on_load(true);
 
-    unsigned char* bytes = stbi_load("popCat.jpg", &widthTx, &heightTx, &numCol, 0);
+    unsigned char* bytes = stbi_load("stone.jpg", &widthTx, &heightTx, &numCol, 0);
 
     std::cout << widthTx << std::endl;
     std::cout << heightTx << std::endl;
@@ -100,7 +100,7 @@ int main()
     // Desenlazar el FBO
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    Shader shaderProgram("Blur.vert", "Blur.frag");
+    Shader shaderProgram("parallax.vert", "parallax.frag");
 
     VAO VAO1;
     VAO1.Bind();
@@ -117,52 +117,98 @@ int main()
     VBO1.Unbind();
     EBO1.Unbind();
 
-    GLuint scale = glGetUniformLocation(shaderProgram.ID, "scale");
-    GLuint tex0 = glGetUniformLocation(shaderProgram.ID, "tex0");
+    //
 
-    GLfloat blurAmount = glGetUniformLocation(shaderProgram.ID, "blurAmount");
-    GLfloat blurDirY = glGetUniformLocation(shaderProgram.ID, "blurDirY");
-    GLfloat blurDirX = glGetUniformLocation(shaderProgram.ID, "blurDirX");
+    VAO VAO2;
+    VAO2.Bind();
 
-     shaderProgram.Activate();
+    VBO VBO2(squareVerticesTwo, sizeof(squareVerticesTwo));
 
-     glUniform1i(tex0, 0);
+    EBO EBO2(squareIndices, sizeof(squareIndices));
 
-     while (!glfwWindowShouldClose(window))
-     {
-         glClearColor(0.0f, 0.0f, 0.0f, 1);
-         glClear(GL_COLOR_BUFFER_BIT);
+    VAO2.LinkAttrib(VBO2, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+    VAO2.LinkAttrib(VBO2, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    VAO2.LinkAttrib(VBO2, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-         glBindTexture(GL_TEXTURE_2D, texture);
+    VAO2.Unbind();
+    VBO2.Unbind();
+    EBO2.Unbind();
 
-         glUniform1f(scale, 0.5f);
-         glUniform1f(blurAmount, 1.0f);
-         glUniform1f(blurDirY, 1.0f);
-         glUniform1f(blurDirX, 1.0f);
-      
-         VAO1.Bind();
 
-         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      
-               
-         // Intercambiar buffers y manejar eventos
-         glfwSwapBuffers(window);
-         glfwPollEvents();
-     }
+    //
 
-     
-      glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    VAO VAO3;
+    VAO3.Bind();
 
-      VAO1.Delete();
-      VBO1.Delete();
-      EBO1.Delete();
+    VBO VBO3(squareVerticesTwo, sizeof(squareVerticesTwo));
 
-      shaderProgram.Delete();
+    EBO EBO3(squareIndices, sizeof(squareIndices));
 
-      glViewport(0, 0, 950, 950);
-      glfwSwapBuffers(window);
+    VAO3.LinkAttrib(VBO3, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+    VAO3.LinkAttrib(VBO3, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    VAO3.LinkAttrib(VBO3, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-      glfwDestroyWindow(window);
-      glfwTerminate();
-      return 0;
+    VAO3.Unbind();
+    VBO3.Unbind();
+    EBO3.Unbind();
+
+    GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
+    GLuint tex0uni = glGetUniformLocation(shaderProgram.ID, "tex0");
+    GLuint texAxis = glGetUniformLocation(shaderProgram.ID, "mirrorAxis");
+    GLuint texKernel = glGetUniformLocation(shaderProgram.ID, "kernelSize");
+    GLuint texHeight = glGetUniformLocation(shaderProgram.ID, "textureHeight");
+
+    shaderProgram.Activate();
+
+    glUniform1i(tex0uni, 0);
+
+    while (!glfwWindowShouldClose(window))
+    {
+        glClearColor(0.0f, 0.0f, 0.0f, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1f(uniID, 0.25f);
+        glUniform1f(texAxis, 1.0f);
+        glUniform1f(texKernel, 1.025f);
+        glUniform1f(texHeight, 1.025f);
+        VAO1.Bind();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // Pasos 1a y 1b
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1f(uniID, 0.25f);
+        glUniform1f(texAxis, 0.0f);
+        glUniform1f(texKernel, 1.0f);
+        glUniform1f(texHeight, 1.0f);
+
+        // Pasos 1c y 1d
+        VAO2.Bind();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        
+        // Intercambiar buffers y manejar eventos
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+    VAO1.Delete();
+    VBO1.Delete();
+    EBO1.Delete();
+
+    VAO2.Delete();
+    VBO2.Delete();
+    EBO2.Delete();
+
+    shaderProgram.Delete();
+
+    glViewport(0, 0, 950, 950);
+    glfwSwapBuffers(window);
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return 0;
 }
