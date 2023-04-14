@@ -36,40 +36,40 @@ int main()
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    //Se crea Textura
-    GLuint texture;
-    glGenTextures(1, &texture);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    //Se especifican configuraciones de la textura
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    //Variables para textura
-
-    int widthTx, heightTx, numCol;
+    //Se leen las imagenes para asignarlas a las texturas    
+    int width1, width2, height1, height2, numCol1, numCol2;
     stbi_set_flip_vertically_on_load(true);
+    unsigned char* bytes1 = stbi_load("stone.jpg", &width1, &height1, &numCol1, 0);
+    unsigned char* bytes2 = stbi_load("noise512.jpg", &width2, &height2, &numCol2, 0);
 
-    unsigned char* bytes = stbi_load("popCat.jpg", &widthTx, &heightTx, &numCol, 0);
+    //Se crean las Texturas
+    GLuint texture1, texture2;
 
-    std::cout << widthTx << std::endl;
-    std::cout << heightTx << std::endl;
-    std::cout << numCol << std::endl;
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthTx, heightTx, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
-
-    //Se genera Textura
-
+    glGenTextures(1, &texture1);
+    glGenTextures(1, &texture2);
+    
+    //Se especifican configuraciones de la textura 1
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width1, height1, 0, GL_RGB, GL_UNSIGNED_BYTE, bytes1);
     glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(bytes);
-    glBindTexture(GL_TEXTURE_2D, 0);
 
+    //Se especifican configuraciones de la textura 2
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width2, height2, 0, GL_RGB, GL_UNSIGNED_BYTE, bytes2);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    stbi_image_free(bytes1);
+    stbi_image_free(bytes2);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     //se crean shaders
 
@@ -90,28 +90,42 @@ int main()
     VBO1.Unbind();
     EBO1.Unbind();
 
-     GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
+     GLuint scale = glGetUniformLocation(shaderProgram.ID, "scale");
      GLuint tex0uni = glGetUniformLocation(shaderProgram.ID, "baseTexture");
      GLuint texDissolve = glGetUniformLocation(shaderProgram.ID, "dissolveTexture");
      GLfloat dissolveFactor = glGetUniformLocation(shaderProgram.ID, "dissolveFactor");
+     GLfloat timeShader = glGetUniformLocation(shaderProgram.ID, "time");
+     GLfloat amplitude = glGetUniformLocation(shaderProgram.ID, "amplitude");
 
-    glUniform1i(uniID, 0.5f);
-    glUniform1i(tex0uni, 0);
-    glUniform1i(texDissolve, 0);
-    glUniform1f(dissolveFactor, 0.5f);
+   
 
- 
+    //time
+    GLfloat seconds = 1.0f;
+
     while (!glfwWindowShouldClose(window))
     {
         glClearColor(0.0f, 0.0f, 0.0f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture2);
      
 
         shaderProgram.Activate();
-        
+        GLfloat time = glfwGetTime() * seconds;
+
+        glUniform1f(timeShader, time);
+        glUniform1f(amplitude, 0.5f);
+        glUniform1f(dissolveFactor, 0.1f);
+
+        glUniform1i(scale, 0.5f);
+        glUniform1i(tex0uni, 0);
+        glUniform1i(texDissolve, 0);
+
+
 
         VAO1.Bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
